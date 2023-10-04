@@ -1,22 +1,26 @@
 package com.sky.controller.admin;
 
 import com.sky.constant.JwtClaimsConstant;
+import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
+import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
 import com.sky.properties.JwtProperties;
+import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.EmployeeService;
 import com.sky.utils.JwtUtil;
 import com.sky.vo.EmployeeLoginVO;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * 员工管理
@@ -24,6 +28,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/admin/employee")
 @Slf4j
+@Api(tags = "员工操作")
 public class EmployeeController {
 
     @Autowired
@@ -38,6 +43,7 @@ public class EmployeeController {
      * @return
      */
     @PostMapping("/login")
+    @ApiOperation("登录")
     public Result<EmployeeLoginVO> login(@RequestBody EmployeeLoginDTO employeeLoginDTO) {
         log.info("员工登录：{}", employeeLoginDTO);
 
@@ -66,9 +72,51 @@ public class EmployeeController {
      *
      * @return
      */
+    @ApiOperation("退出")
     @PostMapping("/logout")
     public Result<String> logout() {
         return Result.success();
     }
+
+    @ApiOperation("新增员工")
+    @PostMapping()
+    public Result<String>  addEmp(@RequestBody EmployeeDTO employeeDto){
+        // 规则校验:长度不符合规定
+        if(employeeDto.getUsername().length() < 3 || employeeDto.getUsername().length() > 15){
+            return Result.error("用户名长度不合法");
+        }
+
+        if(employeeDto.getName().isEmpty()){
+            return Result.error("姓名不能为空");
+        }
+
+        if(employeeDto.getPhone().length() != 11){
+            return Result.error("请输入正确的手机号");
+        }
+
+        if(employeeDto.getIdNumber().length() != 18){
+            return Result.error("请检查身份证号");
+        }else if(!Pattern.compile("^[0-9]\\d{16}[1-9, x]$").matcher(employeeDto.getIdNumber()).find()){
+            return Result.error("身份证号不合法");
+        }
+
+        // 检查用户名是否唯一 目前通过捕获异常处理
+//        if(employeeService.selectEmp(employeeDto.getUsername()) != null){
+//            return Result.error("该身份已存在");
+//        }
+
+        employeeService.addEmp(employeeDto);
+
+        return Result.success();
+    }
+
+
+    @GetMapping("/page")
+    @ApiOperation("分页")
+    public Result page(EmployeePageQueryDTO employeePageQueryDTO){
+        PageResult page = employeeService.page(employeePageQueryDTO);
+        return Result.success(page);
+    }
+
 
 }
