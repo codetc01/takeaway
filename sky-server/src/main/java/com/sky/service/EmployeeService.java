@@ -23,4 +23,9 @@ public interface EmployeeService {
 
     PageResult page(EmployeePageQueryDTO employeePageQueryDTO);
 
+    Integer onOrOffAccount(Integer status, Long id);
+
+    Employee getById(Integer id);
+
+    void editEmpInfo(EmployeeDTO employeeDTO);
 }

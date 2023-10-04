@@ -16,6 +16,7 @@ import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
 import com.sky.result.PageResult;
 import com.sky.service.EmployeeService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
@@ -49,15 +50,15 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new AccountNotFoundException(MessageConstant.ACCOUNT_NOT_FOUND);
         }
 
-        //密码比对
+        // 密码比对
         password = DigestUtils.md5DigestAsHex(password.getBytes(StandardCharsets.UTF_8));
         if (!password.equals(employee.getPassword())) {
-            //密码错误
+            // 密码错误
             throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
         }
 
         if (employee.getStatus() == StatusConstant.DISABLE) {
-            //账号被锁定
+            // 账号被锁定
             throw new AccountLockedException(MessageConstant.ACCOUNT_LOCKED);
         }
 
@@ -97,6 +98,42 @@ public class EmployeeServiceImpl implements EmployeeService {
         Page<Employee> page = employeeMapper.page(employeePageQueryDTO);
         PageResult pageResult = new PageResult(page.getTotal(), page.getResult());
         return pageResult;
+    }
+
+    @Override
+    public Integer onOrOffAccount(Integer status, Long id) {
+        Employee employee = Employee.builder()
+                .status(status)
+                .id(id)
+                .build();
+        int count = employeeMapper.onOrOffAccount(employee);
+        System.out.println("受影响行数" + count);
+        return count;
+    }
+
+    @Override
+    public Employee getById(Integer id) {
+        Employee employee = employeeMapper.getById(id);
+        // 这样前端调试也就看不到密码了
+        employee.setPassword("****");
+        return employee;
+    }
+
+    @Override
+    public void editEmpInfo(EmployeeDTO employeeDTO) {
+        Employee employee = Employee.builder()
+                .id(employeeDTO.getId())
+                .idNumber(employeeDTO.getIdNumber())
+                .name(employeeDTO.getName())
+                .phone(employeeDTO.getPhone())
+                .sex(employeeDTO.getSex())
+                .username(employeeDTO.getUsername())
+                .updateTime(LocalDateTime.now())
+                .updateUser(BaseContext.getCurrentId())
+                .build();
+//        属性拷贝，简化编码
+//        BeanUtils.copyProperties(employeeDTO, employee);
+        employeeMapper.onOrOffAccount(employee);
     }
 
 }

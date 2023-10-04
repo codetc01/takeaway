@@ -118,5 +118,25 @@ public class EmployeeController {
         return Result.success(page);
     }
 
+    @PostMapping("/status/{status}")
+    @ApiOperation("启用或禁用账号")
+    public Result onOrOffAccount(@PathVariable Integer status, Long id){
+        Integer integer = employeeService.onOrOffAccount(status, id);
+        return Result.success();
+    }
+
+    @GetMapping("/{id}")
+    @ApiOperation("根据ID查询员工信息")
+    public Result<Employee> getById(@PathVariable Integer id){
+        Employee employee = employeeService.getById(id);
+        return Result.success(employee);
+    }
+
+    @PutMapping()
+    @ApiOperation("修改员工信息")
+    public Result editEmpInfo(@RequestBody EmployeeDTO employeeDTO){
+        employeeService.editEmpInfo(employeeDTO);
+        return Result.success();
+    }
 
 }
