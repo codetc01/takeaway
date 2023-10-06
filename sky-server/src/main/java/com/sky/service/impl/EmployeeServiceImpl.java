@@ -82,11 +82,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setSex(employeeDto.getSex());
         employee.setIdNumber(employeeDto.getIdNumber());
         employee.setStatus(StatusConstant.ENABLE);
-        employee.setCreateTime(LocalDateTime.now());
-        employee.setUpdateTime(LocalDateTime.now());
-        // 这里后期要做修改，改为当前用户ID
-        employee.setCreateUser(BaseContext.getCurrentId());
-        employee.setUpdateUser(BaseContext.getCurrentId());
+//        employee.setCreateTime(LocalDateTime.now());
+//        employee.setUpdateTime(LocalDateTime.now());
+//        // 这里后期要做修改，改为当前用户ID
+//        employee.setCreateUser(BaseContext.getCurrentId());
+//        employee.setUpdateUser(BaseContext.getCurrentId());
 
         employeeMapper.addEmp(employee);
     }
@@ -128,8 +128,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .phone(employeeDTO.getPhone())
                 .sex(employeeDTO.getSex())
                 .username(employeeDTO.getUsername())
-                .updateTime(LocalDateTime.now())
-                .updateUser(BaseContext.getCurrentId())
+//                .updateTime(LocalDateTime.now())
+//                .updateUser(BaseContext.getCurrentId())
                 .build();
 //        属性拷贝，简化编码
 //        BeanUtils.copyProperties(employeeDTO, employee);
