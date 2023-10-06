@@ -8,7 +8,7 @@ sky:
     password: root
 
   alioss:
-    endpoint: oss-cn-beijing.aliyuncs.com
-    access-key-id: LTAI5tCtFqsXjbX2hwHF2ofv
-    access-key-secret: bZCEMHY4uw8duAvJesQ6JHl0ILWiqh
-    bucket-name: ruiji-tc
+    endpoint: ********************
+    access-key-id: ************************
+    access-key-secret: ***********************
+    bucket-name: ****
