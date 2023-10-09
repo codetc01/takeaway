@@ -16,10 +16,12 @@ import com.sky.result.PageResult;
 import com.sky.service.DishService;
 import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -107,5 +109,35 @@ public class DishServiceImpl implements DishService {
                 dishFlavorMapper.deleteById(l);
             }
         }
+    }
+
+    @Override
+    public DishVO getById(Long id) {
+        Dish dish = dishMapper.getById(id);
+
+        List<DishFlavor> dishFlavor = dishFlavorMapper.getById(dish.getId());
+
+        DishVO dishVO = new DishVO();
+        BeanUtils.copyProperties(dish, dishVO);
+        dishVO.setFlavors(dishFlavor);
+        return dishVO;
+    }
+
+    @Override
+    public void editDish(DishVO dishVO) {
+        Dish dish = new Dish();
+        BeanUtils.copyProperties(dishVO, dish);
+
+        dishMapper.editDish(dish);
+
+        // 先把关联的口味数据全部删掉，再处理下一步
+        dishFlavorMapper.deleteById(dishVO.getId());
+
+        List<DishFlavor> flavors = dishVO.getFlavors();
+        for(DishFlavor flavor : flavors){
+            flavor.setDishId(dishVO.getId());
+        }
+        // 再把当前数据全部加入
+        dishFlavorMapper.addDish(flavors);
     }
 }

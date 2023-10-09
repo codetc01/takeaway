@@ -8,4 +8,12 @@
             (#{flavor.dishId}, #{flavor.name}, #{flavor.value})
         </foreach>
     </insert>
+    <update id="editDishFlavor">
+        update dish_flavor
+        <set>
+            <foreach collection="flavors" item="flavor">
+
+            </foreach>
+        </set>
+    </update>
 </mapper>

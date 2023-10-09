@@ -24,4 +24,10 @@ public interface DishMapper {
 
     @Delete("delete from dish where id = #{id} and status = 0")
     Integer deleteDish(Long id);
+
+    @Select("select * from dish where id = #{id}")
+    Dish getById(Long id);
+
+    @AutoFill(value = OperationType.UPDATE)
+    void editDish(Dish dish);
 }
