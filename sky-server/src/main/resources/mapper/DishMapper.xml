@@ -28,9 +28,9 @@
         select d.*, c.name as categoryName from Dish d, category c
         <where>
             d.category_id = c.id
-            <if test="categoryId != null">and categoryId = #{categoryId}</if>
-            <if test="name != null">and name = #{name}</if>
-            <if test="status != null">and status = #{status}</if>
+            <if test="categoryId != null">and category_id = #{categoryId}</if>
+            <if test="name != null">and d.name = #{name}</if>
+            <if test="status != null">and d.status = #{status}</if>
         </where>
         order by d.create_time desc
     </select>

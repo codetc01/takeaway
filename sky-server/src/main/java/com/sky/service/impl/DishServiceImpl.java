@@ -140,4 +140,15 @@ public class DishServiceImpl implements DishService {
         // 再把当前数据全部加入
         dishFlavorMapper.addDish(flavors);
     }
+
+    @Override
+    public List<Dish> getByCategoryId(Long id) {
+        List<Dish> dishes = dishMapper.getByCategoryId(id);
+        return dishes;
+    }
+
+    @Override
+    public void editDishStatus(Integer status) {
+        dishMapper.editDishStatus(status);
+    }
 }

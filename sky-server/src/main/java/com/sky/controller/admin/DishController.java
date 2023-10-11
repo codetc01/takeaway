@@ -2,6 +2,7 @@ package com.sky.controller.admin;
 
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
+import com.sky.entity.Dish;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.DishService;
@@ -11,6 +12,8 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @PROJECT_NAME: sky-take-out
@@ -60,6 +63,20 @@ public class DishController {
     @ApiOperation("修改菜品")
     public Result editDish(@RequestBody DishVO dishVO){
         dishService.editDish(dishVO);
+        return Result.success();
+    }
+
+    @GetMapping("/list")
+    @ApiOperation("根据分类id查询菜品")
+    public Result<List<Dish>> getByCategoryId(Long categoryId){
+        List<Dish> dishes = dishService.getByCategoryId(categoryId);
+        return Result.success(dishes);
+    }
+
+    @PostMapping("/status/{status}")
+    @ApiOperation("菜品启售停售")
+    public Result editDishStatus(@PathVariable Integer status){
+        dishService.editDishStatus(status);
         return Result.success();
     }
 }
