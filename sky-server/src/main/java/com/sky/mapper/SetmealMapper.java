@@ -33,4 +33,7 @@ public interface SetmealMapper {
     void editSetmeal(Setmeal setmeal);
 
     void deleteSetmeal(List<Long> ids);
+
+    @Select("select * from setmeal where category_id = #{categoryId}")
+    List<Setmeal> getByCategoryId(Long categoryId);
 }

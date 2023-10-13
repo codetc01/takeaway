@@ -11,9 +11,12 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @PROJECT_NAME: sky-take-out
@@ -30,10 +33,17 @@ public class DishController {
     @Autowired
     private DishService dishService;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     @PostMapping()
     @ApiOperation("新增菜品")
     public Result addDish(@RequestBody DishDTO dishDTO){
         dishService.addDish(dishDTO);
+
+        String key = "dish_" + dishDTO.getCategoryId();
+        editRedisCacheData(key);
+
         return Result.success();
     }
 
@@ -49,6 +59,7 @@ public class DishController {
     public Result deleteDish(String ids){
         // System.out.println(ids);
         dishService.deleteDish(ids);
+        editRedisCacheData("dish_*");
         return Result.success();
     }
 
@@ -63,6 +74,7 @@ public class DishController {
     @ApiOperation("修改菜品")
     public Result editDish(@RequestBody DishVO dishVO){
         dishService.editDish(dishVO);
+        editRedisCacheData("dish_*");
         return Result.success();
     }
 
@@ -78,5 +90,10 @@ public class DishController {
     public Result editDishStatus(@PathVariable Integer status){
         dishService.editDishStatus(status);
         return Result.success();
+    }
+
+    private void editRedisCacheData(String pattern){
+        Set keys = redisTemplate.keys(pattern);
+        redisTemplate.delete(keys);
     }
 }

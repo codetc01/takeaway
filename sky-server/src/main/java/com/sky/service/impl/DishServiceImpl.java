@@ -66,7 +66,11 @@ public class DishServiceImpl implements DishService {
             dishFlavor.setDishId(id);
         }
 
-        dishFlavorMapper.addDish(flavors);
+
+        // 再把当前数据全部加入
+        if(flavors !=null && flavors.size() > 0) {
+            dishFlavorMapper.addDish(flavors);
+        }
 
     }
 
@@ -138,7 +142,9 @@ public class DishServiceImpl implements DishService {
             flavor.setDishId(dishVO.getId());
         }
         // 再把当前数据全部加入
-        dishFlavorMapper.addDish(flavors);
+        if(flavors !=null && flavors.size() > 0) {
+            dishFlavorMapper.addDish(flavors);
+        }
     }
 
     @Override
