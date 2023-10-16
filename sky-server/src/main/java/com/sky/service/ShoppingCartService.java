@@ -9,4 +9,8 @@ public interface ShoppingCartService {
     void addShoppingCart(ShoppingCartDTO shoppingCartDTO);
 
     List<ShoppingCart> viewShoppingCart();
+
+    void cleanShoppingCart();
+
+    void deleteOneShop(ShoppingCartDTO shoppingCartDTO);
 }
