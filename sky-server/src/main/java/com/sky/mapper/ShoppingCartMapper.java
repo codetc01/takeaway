@@ -33,4 +33,5 @@ public interface ShoppingCartMapper {
     void cleanShoppingCart(Long currentId);
 
     void deleteByUserId(ShoppingCart shoppingCart);
+
 }
