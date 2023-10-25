@@ -241,4 +241,25 @@ public class UserSubmitServiceImpl implements UserSubmitService {
             shoppingCartMapper.addShoppingCart(shoppingCart);
         }
     }
+
+    @Override
+    public void reminder(Long id) {
+//        bjectObjectHashMap.put("type", 1);
+//        objectObjectHashMap.put("orderId", ordersDB.getId());
+//        objectObjectHashMap.put("content", "订单号" + outTradeNo);
+        Orders byID = userSubmitMapper.getByID(id);
+
+        if(byID == null){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        Map map = new HashMap<>();
+        map.put("type", 2);
+        map.put("orderId", id);
+        map.put("content", "订单号" + byID.getNumber());
+
+        String s = JSONObject.toJSONString(map);
+
+        webSocketServer.sendToAllClient(s);
+    }
 }

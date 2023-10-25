@@ -77,5 +77,11 @@ public class UserSubmitController {
         return Result.success();
     }
 
+    @GetMapping("/reminder/{id}")
+    @ApiOperation("催单")
+    public Result reminder(@PathVariable Long id){
+        userSubmitService.reminder(id);
+        return Result.success();
+    }
 
 }
