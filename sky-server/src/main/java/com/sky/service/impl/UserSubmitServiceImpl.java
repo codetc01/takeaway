@@ -1,27 +1,30 @@
 package com.sky.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
+import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
-import com.sky.entity.AddressBook;
-import com.sky.entity.OrderDetail;
-import com.sky.entity.Orders;
-import com.sky.entity.ShoppingCart;
+import com.sky.entity.*;
 import com.sky.exception.OrderBusinessException;
-import com.sky.mapper.OrderDetailMapper;
-import com.sky.mapper.ShoppingCartMapper;
-import com.sky.mapper.UserSubmitMapper;
-import com.sky.mapper.addressBookMapper;
+import com.sky.mapper.*;
+import com.sky.result.PageResult;
 import com.sky.service.UserSubmitService;
+import com.sky.utils.WeChatPayUtil;
+import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
+import com.sky.vo.OrderVO;
+import com.sky.webSocket.WebSocketServer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @PROJECT_NAME: sky-take-out
@@ -43,6 +46,15 @@ public class UserSubmitServiceImpl implements UserSubmitService {
 
     @Autowired
     private OrderDetailMapper orderDetailMapper;
+
+    @Autowired
+    private WeChatPayUtil weChatPayUtil;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private WebSocketServer webSocketServer;
 
     @Override
     @Transactional
@@ -94,5 +106,139 @@ public class UserSubmitServiceImpl implements UserSubmitService {
         }
 
         return orderSubmitVO;
+    }
+
+    /**
+     * 订单支付
+     *
+     * @param ordersPaymentDTO
+     * @return
+     */
+    public OrderPaymentVO payment(OrdersPaymentDTO ordersPaymentDTO) throws Exception {
+        // 当前登录用户id
+        Long userId = BaseContext.getCurrentId();
+        User user = userMapper.getById(userId);
+
+        //调用微信支付接口，生成预支付交易单
+//        JSONObject jsonObject = weChatPayUtil.pay(
+//                ordersPaymentDTO.getOrderNumber(), //商户订单号
+//                new BigDecimal(0.01), //支付金额，单位 元
+//                "苍穹外卖订单", //商品描述
+//                user.getOpenid() //微信用户的openid
+//        );
+        // 跳过微信支付流程
+        JSONObject jsonObject = new JSONObject();
+
+        if (jsonObject.getString("code") != null && jsonObject.getString("code").equals("ORDERPAID")) {
+            throw new OrderBusinessException("该订单已支付");
+        }
+
+        OrderPaymentVO vo = jsonObject.toJavaObject(OrderPaymentVO.class);
+        vo.setPackageStr(jsonObject.getString("package"));
+
+        return vo;
+    }
+
+    /**
+     * 支付成功，修改订单状态
+     *
+     * @param outTradeNo
+     */
+    public void paySuccess(String outTradeNo) {
+
+        // 根据订单号查询订单
+        Orders ordersDB = userSubmitMapper.getByNumber(outTradeNo);
+
+        // 根据订单id更新订单的状态、支付方式、支付状态、结账时间
+        Orders orders = Orders.builder()
+                .id(ordersDB.getId())
+                .status(Orders.TO_BE_CONFIRMED)
+                .payStatus(Orders.PAID)
+                .checkoutTime(LocalDateTime.now())
+                .build();
+
+        Map<Object, Object> objectObjectHashMap = new HashMap<>();
+
+        objectObjectHashMap.put("type", 1);
+        objectObjectHashMap.put("orderId", ordersDB.getId());
+        objectObjectHashMap.put("content", "订单号" + outTradeNo);
+
+        String s = JSONObject.toJSONString(objectObjectHashMap);
+
+        webSocketServer.sendToAllClient(s);
+
+        userSubmitMapper.update(orders);
+    }
+
+    @Override
+    public OrderVO orderDetail(Long id) {
+        Orders orders = userSubmitMapper.getByID(id);
+
+        // 拷贝order属性
+        OrderVO orderVO = new OrderVO();
+        BeanUtils.copyProperties(orders, orderVO);
+
+        // 查询并封装订单原型List
+
+        List<OrderDetail> orderDetails = orderDetailMapper.getByOrderId(id);
+        orderVO.setOrderDetailList(orderDetails);
+
+        return orderVO;
+    }
+
+    @Override
+    public PageResult historyOrders(Integer page, Integer pageSize, Integer status) {
+        PageHelper.startPage(page, pageSize);
+
+        Page<OrderVO> page1 = orderDetailMapper.historyOrders(BaseContext.getCurrentId(), status);
+
+
+        for (int i = 0; i < page1.getResult().size(); i++) {
+            OrderVO orderVO = page1.getResult().get(i);
+
+            List<OrderDetail> byOrderId = orderDetailMapper.getByOrderId(orderVO.getId());
+            orderVO.setOrderDetailList(byOrderId);
+        }
+
+        PageResult pageResult = new PageResult();
+        pageResult.setTotal(page1.getTotal());
+        pageResult.setRecords(page1.getResult());
+
+        return pageResult;
+    }
+
+    @Override
+    public void cancel(Long id) {
+        userSubmitMapper.cancel(id, Orders.CANCELLED);
+    }
+
+    // 这个再来一单太过于生硬，应该是添加到购物车，让用户决定再加不加
+//    @Override
+//    public void repetition(Long id) {
+//        Orders orders = userSubmitMapper.getByID(id);
+//        orders.setNumber(String.valueOf(System.currentTimeMillis()));
+//        orders.setStatus(Orders.PENDING_PAYMENT);
+//        orders.setOrderTime(LocalDateTime.now());
+//        orders.setPayStatus(Orders.UN_PAID);
+//
+//        userSubmitMapper.addData(orders);
+//
+//        List<OrderDetail> byOrderId = orderDetailMapper.getByOrderId(id);
+//
+//        // 批量插入
+//        orderDetailMapper.batchAddData(byOrderId);
+//    }
+
+    @Override
+    public void repetition(Long id) {
+        List<OrderDetail> byOrderId = orderDetailMapper.getByOrderId(id);
+
+        for(OrderDetail orderDetail : byOrderId){
+            ShoppingCart shoppingCart = new ShoppingCart();
+            BeanUtils.copyProperties(orderDetail, shoppingCart);
+            shoppingCart.setUserId(BaseContext.getCurrentId());
+            shoppingCart.setCreateTime(LocalDateTime.now());
+            shoppingCartMapper.addShoppingCart(shoppingCart);
+        }
     }
 }
