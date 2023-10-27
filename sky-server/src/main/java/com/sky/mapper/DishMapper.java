@@ -6,8 +6,10 @@ import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
 import com.sky.enumeration.OperationType;
 import com.sky.vo.DishVO;
+import com.sky.vo.Top10VO;
 import org.apache.ibatis.annotations.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -35,4 +37,5 @@ public interface DishMapper {
 
     @Update("update dish set status = #{status}")
     void editDishStatus(Integer status);
+
 }

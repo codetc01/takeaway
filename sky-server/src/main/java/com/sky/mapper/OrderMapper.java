@@ -4,6 +4,7 @@ import com.github.pagehelper.Page;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
 import com.sky.vo.OrderVO;
+import com.sky.vo.Top10VO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -45,4 +46,13 @@ public interface OrderMapper {
 
     @Update("update orders set status = #{status}, delivery_time = #{deliveryTime} where id = #{id}")
     void processDeliveryTime(Orders orders);
+
+    @Select("select count(*) from orders where order_time < #{last} and order_time > #{start}")
+    Integer getTotalNumber(LocalDateTime start, LocalDateTime last);
+
+    @Select("select count(*) from orders where order_time < #{last} and order_time > #{start} and status = #{completed}")
+    Integer getEffectiveNumber(LocalDateTime start, LocalDateTime last, Integer completed);
+
+    @Select("select id from orders where order_time < #{last} and order_time > #{start} and status = #{completed}")
+    List<Integer> getEffectiveId(LocalDateTime start, LocalDateTime last, Integer completed);
 }

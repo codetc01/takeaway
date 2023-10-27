@@ -5,6 +5,7 @@ import com.sky.entity.OrderDetail;
 import com.sky.entity.Orders;
 import com.sky.entity.ShoppingCart;
 import com.sky.vo.OrderVO;
+import com.sky.vo.Top10VO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
@@ -26,4 +27,6 @@ public interface OrderDetailMapper {
     Page<OrderVO> historyOrders(Long currentId, Integer status);
 
     void batchAddData(List<OrderDetail> byOrderId);
+
+    List<Top10VO> getInOrderId(List<Integer> effectiveId);
 }
