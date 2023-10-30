@@ -35,7 +35,7 @@ public class UserSetmealServiceImpl implements UserSetmealService {
 
     @Override
     public List<Setmeal> getById(Long categoryId) {
-        List<Setmeal> setmeals = setmealMapper.getByCategoryId(categoryId);
+        List<Setmeal> setmeals = setmealMapper.getByCategoryIdAndStatus(categoryId, 1);
         return setmeals;
     }
 

@@ -5,11 +5,19 @@ import com.sky.entity.Orders;
 import com.sky.entity.Setmeal;
 import com.sky.mapper.*;
 import com.sky.service.ReportService;
+import com.sky.service.WorkspaceService;
 import com.sky.vo.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -44,6 +52,9 @@ public class ReportServiceImpl implements ReportService {
 
     @Autowired
     private SetmealMapper setmealMapper;
+
+    @Autowired
+    private WorkspaceService workspaceService;
 
     @Override
     public TurnoverReportVO turnoverStatistics(LocalDate begin, LocalDate end) {
@@ -192,5 +203,59 @@ public class ReportServiceImpl implements ReportService {
                 .nameList(StringUtils.join(name, ","))
                 .numberList(StringUtils.join(total, ","))
                 .build();
+    }
+
+    @Override
+    public void export(HttpServletResponse httpServletResponse) {
+
+        // 先写出相关时间
+        LocalDate now = LocalDate.now();
+
+        LocalDateTime start = LocalDateTime.of(now.minusDays(30), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(now.minusDays(1), LocalTime.MAX);
+
+        LocalDateTime endDay = LocalDateTime.of(now.minusDays(30), LocalTime.MAX);
+
+        // 查询出相关数据
+        BusinessDataVO businessDataVO = workspaceService.businessData(start, end);
+
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("template/template.xlsx");
+
+        try {
+            XSSFWorkbook sheets = new XSSFWorkbook(in);
+
+            XSSFSheet sheetAt = sheets.getSheetAt(0);
+
+            sheetAt.getRow(1).getCell(1).setCellValue(start.toLocalDate() + "-" + end.toLocalDate());
+
+            XSSFRow row3 = sheetAt.getRow(3);
+            row3.getCell(2).setCellValue(businessDataVO.getTurnover());
+            row3.getCell(4).setCellValue(businessDataVO.getOrderCompletionRate());
+            row3.getCell(6).setCellValue(businessDataVO.getNewUsers());
+
+            XSSFRow row4 = sheetAt.getRow(4);
+            row4.getCell(2).setCellValue(businessDataVO.getValidOrderCount());
+            row4.getCell(4).setCellValue(businessDataVO.getUnitPrice());
+
+            for (int i = 0; i < 30; i++) {
+
+                BusinessDataVO businessDataVO1 = workspaceService.businessData(start.plusDays(i), endDay.plusDays(i));
+
+                XSSFRow row = sheetAt.getRow(7 + i);
+                row.getCell(1).setCellValue(start.plusDays(i).toLocalDate().toString());
+                row.getCell(2).setCellValue(businessDataVO1.getTurnover());
+                row.getCell(3).setCellValue(businessDataVO1.getValidOrderCount());
+                row.getCell(4).setCellValue(businessDataVO1.getOrderCompletionRate());
+                row.getCell(5).setCellValue(businessDataVO1.getUnitPrice());
+                row.getCell(6).setCellValue(businessDataVO1.getNewUsers());
+
+            }
+
+            ServletOutputStream outputStream = httpServletResponse.getOutputStream();
+            sheets.write(outputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }

@@ -55,4 +55,7 @@ public interface OrderMapper {
 
     @Select("select id from orders where order_time < #{last} and order_time > #{start} and status = #{completed}")
     List<Integer> getEffectiveId(LocalDateTime start, LocalDateTime last, Integer completed);
+
+    @Select("select sum(amount) from orders where order_time < #{end} and order_time > #{start} and status = #{completed}")
+    Double getSaleMoney(LocalDateTime start, LocalDateTime end, Integer completed);
 }

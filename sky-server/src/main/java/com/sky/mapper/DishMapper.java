@@ -38,4 +38,6 @@ public interface DishMapper {
     @Update("update dish set status = #{status}")
     void editDishStatus(Integer status);
 
+    @Select("select count(*) from dish where status = #{status}")
+    Integer getByStatus(int status);
 }
